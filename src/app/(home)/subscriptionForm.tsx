@@ -1,8 +1,10 @@
 'use client'
 import { Button } from '@/components/button'
 import { InputField, InputIcon, InputRoot } from '@/components/input'
+import { subscribeToEvent } from '@/http/api'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowRight, Mail, User } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -11,23 +13,28 @@ const subscriptionSchema = z.object({
   email: z.string().email('Digite um e-mail válido'),
 })
 
-type subscriptionSchema = z.infer<typeof subscriptionSchema>
+type SubscriptionSchema = z.infer<typeof subscriptionSchema>
 
 export function SubscriptionForm() {
+  const searchParms = useSearchParams()
+  const router = useRouter()
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<subscriptionSchema>({
+  } = useForm<SubscriptionSchema>({
     resolver: zodResolver(subscriptionSchema),
   })
 
-  function onSubscrive(data: subscriptionSchema) {
-    console.log(data)
+  async function onSubscribe({ name, email }: SubscriptionSchema) {
+    const referrer = searchParms.get('referrer')
+    const { subscriberId } = await subscribeToEvent({ name, email, referrer })
+    router.push(`/invite/${subscriberId}`)
   }
   return (
     <form
-      onSubmit={handleSubmit(onSubscrive)}
+      onSubmit={handleSubmit(onSubscribe)}
       className="bg-gray-700 border-gray-600 rounded-2xl p-8 space-y-6 w-full md:max-w-[440px]"
     >
       <h2 className="font-heading font-semibold text-gray-200 text-xl">
